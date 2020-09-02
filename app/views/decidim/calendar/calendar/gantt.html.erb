@@ -6,10 +6,10 @@
 <% end %>
 <%= javascript_include_tag "decidim/calendar/gantt" %>
 <%= stylesheet_link_tag "decidim/calendar/gantt" %>
-
+<% byebug %>
 <script charset="utf-8">
   var tasks = [
-  <% @events.each do |p| %>
+  <% @events.compact.each do |p| %>
     <%= participatory_gantt(p).html_safe %>
     <%= "," unless p == @events.last %>
   <% end %>
