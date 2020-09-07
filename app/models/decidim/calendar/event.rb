@@ -12,7 +12,7 @@ module Decidim
 
       @models = @models << Decidim::Consultation if defined? Decidim::Consultation
 
-      def self.all(current_organization)
+      def self.where(current_organization)
         events = []
         @models.collect do |model|
           model

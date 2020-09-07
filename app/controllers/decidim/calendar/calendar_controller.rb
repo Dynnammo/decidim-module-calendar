@@ -7,7 +7,7 @@ module Decidim
       include ParticipatorySpaceContext
       layout "calendar"
       def index
-        @events = Event.all(current_organization)
+        @events = Event.where(current_organization)
         @resources = %w(debate external_event meeting participatory_step)
         @resources = @resources << "consultation" if defined? Decidim::Consultation
       end
