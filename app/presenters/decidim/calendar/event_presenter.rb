@@ -21,7 +21,7 @@ module Decidim
       def type
         case __getobj__.class.name
         when "Decidim::ParticipatoryProcessStep"
-          "participatory_step"
+          "participatory_process_step"
         when "Decidim::Meetings::Meeting"
           "meeting"
         when "Decidim::Calendar::ExternalEvent"
@@ -34,17 +34,13 @@ module Decidim
       end
 
       def full_id
-        case __getobj__.class.name
-        when "Decidim::ParticipatoryProcessStep"
-          "#{participatory_process.id}-#{id}"
-        else
-          id
-        end
+        return id unless participatory_process_step?
+        
+        "#{participatory_process.id}-#{id}"
       end
 
       def parent
-        case __getobj__.class.name
-        when "Decidim::ParticipatoryProcessStep"
+        if participatory_process_step? 
           "#{participatory_process.id}-#{participatory_process.steps.find_by(position: position - 1).id}" if position.positive?
         end
       end
@@ -52,16 +48,11 @@ module Decidim
       def link
         return url if respond_to?(:url)
 
-        @link ||= case __getobj__.class.name
-                  when "Decidim::ParticipatoryProcessStep"
-                    Decidim::ResourceLocatorPresenter.new(participatory_process).url
-                  else
-                    Decidim::ResourceLocatorPresenter.new(__getobj__).url
-                  end
+        component = participatory_process_step? ? participatory_process : __getobj__
+        return Decidim::ResourceLocatorPresenter.new(component).url
       end
 
       def start
-        # byebug
         @start ||= if respond_to?(:start_date)
                      start_date
                    elsif respond_to?(:start_at)
@@ -87,27 +78,39 @@ module Decidim
       end
 
       def full_title
-        @full_title ||= case __getobj__.class.name
-                        when "Decidim::ParticipatoryProcessStep"
-                          participatory_process.title
-                        else
-                          title
-                        end
+        participatory_process_step? ? participatory_process.title : title
       end
 
       def subtitle
-        @subtitle ||= case __getobj__.class.name
-                      when "Decidim::ParticipatoryProcessStep"
-                        title
-                      else
-                        ""
-                      end
+        @subtitle ||= participatory_process_step? ? title : ""
       end
 
       def all_day?
-        return false if start.nil? || finish.nil?
+        days > 1
+      end
 
-        (start.to_date..finish.to_date).count > 1
+      def days
+        return 0 if start.nil? || finish.nil?
+
+        (start.to_date..finish.to_date).count
+      end
+
+      def model_class_name
+        @model.class.name
+      end
+
+      def participatory_process_step?
+        type == "participatory_process_step"
+      end
+
+      def compatible_modules
+        [
+          "Decidim::Meetings::Meeting",
+          "Decidim::ParticipatoryProcessStep",
+          "Decidim::Debates::Debate",
+          "Decidim::Calendar::ExternalEvent",
+          "Decidim::Consultation"
+        ]
       end
     end
   end
